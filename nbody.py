@@ -9,7 +9,7 @@
 # modified by Andriy Misyura
 # slightly modified by bmmeijers
 
-import sys
+import sys, time
 from math import sqrt, pi as PI
 
 
@@ -69,26 +69,30 @@ SYSTEM = tuple(BODIES.values())
 PAIRS = tuple(combinations(SYSTEM))
 
 
-def advance(dt, n, bodies=SYSTEM, pairs=PAIRS):
-    for i in range(n):
-        for ([x1, y1, z1], v1, m1, [x2, y2, z2], v2, m2) in pairs:
-            dx = x1 - x2
-            dy = y1 - y2
-            dz = z1 - z2
-            dist = sqrt(dx * dx + dy * dy + dz * dz)
-            mag = dt / (dist * dist * dist)
-            b1m = m1 * mag
-            b2m = m2 * mag
-            v1[0] -= dx * b2m
-            v1[1] -= dy * b2m
-            v1[2] -= dz * b2m
-            v2[2] += dz * b1m
-            v2[1] += dy * b1m
-            v2[0] += dx * b1m
-        for (r, [vx, vy, vz], m) in bodies:
-            r[0] += dt * vx
-            r[1] += dt * vy
-            r[2] += dt * vz
+def advance(dt, n, bodies=SYSTEM, pairs=PAIRS): # σε μία ολοκληρωμένη εχουμε τις θέσεις και για τα 5 σώματα
+    with open("{}.csv".format(int(sys.argv[1])), "w") as fout:
+        fout.write("name of the body;position x;position y;position z \n")
+        for i in range(n):
+            for ([x1, y1, z1], v1, m1, [x2, y2, z2], v2, m2) in pairs:
+                dx = x1 - x2
+                dy = y1 - y2
+                dz = z1 - z2
+                dist = sqrt(dx * dx + dy * dy + dz * dz)
+                mag = dt / (dist * dist * dist)
+                b1m = m1 * mag
+                b2m = m2 * mag
+                v1[0] -= dx * b2m
+                v1[1] -= dy * b2m
+                v1[2] -= dz * b2m
+                v2[2] += dz * b1m
+                v2[1] += dy * b1m
+                v2[0] += dx * b1m
+            for (r, [vx, vy, vz], m) in bodies:
+                r[0] += dt * vx
+                r[1] += dt * vy
+                r[2] += dt * vz
+            for body,(r, v, m) in BODIES.items():
+                fout.write("{};{};{};{}\n".format(body,r[0],r[1],r[2]))
 
 
 def report_energy(bodies=SYSTEM, pairs=PAIRS, e=0.0):
@@ -96,10 +100,10 @@ def report_energy(bodies=SYSTEM, pairs=PAIRS, e=0.0):
         dx = x1 - x2
         dy = y1 - y2
         dz = z1 - z2
-        e -= (m1 * m2) / ((dx * dx + dy * dy + dz * dz) ** 0.5)
+        e -= (m1 * m2) / ((dx * dx + dy * dy + dz * dz) ** 0.5) #κανουμε update τις ενεργειες που προκυπτουν απο τα ζευγαρια
     for (r, [vx, vy, vz], m) in bodies:
         e += m * (vx * vx + vy * vy + vz * vz) / 2.0
-    print("Energy: %.9f" % e)
+    print("Energy: %.9f" % e) #παιρνουμε την ενεργεια για καθε body
 
 
 def offset_momentum(ref, bodies=SYSTEM, px=0.0, py=0.0, pz=0.0):
@@ -111,7 +115,7 @@ def offset_momentum(ref, bodies=SYSTEM, px=0.0, py=0.0, pz=0.0):
     v[0] = px / m
     v[1] = py / m
     v[2] = pz / m
-
+    # το velocity του ηλιου σχετικα με τις θεσεις των αλλων σωματων
 
 def main(n, ref="sun"):
     offset_momentum(BODIES[ref])
@@ -122,8 +126,11 @@ def main(n, ref="sun"):
 
 if __name__ == "__main__":
     if len(sys.argv) >= 2:
+        start=time.time()
         main(int(sys.argv[1]))
-        sys.exit(0)
+        end=time.time()
+        print("Runtime of the program for {} iterations is {:0.5f} seconds".format(int(sys.argv[1]),end-start))
+        sys.exit(0) #means an exit without errors
     else:
         print(f"This is {sys.argv[0]}")
         print("Call this program with an integer as program argument")
