@@ -12,12 +12,14 @@
 */
 
 #define _USE_MATH_DEFINES // https://docs.microsoft.com/en-us/cpp/c-runtime-library/math-constants?view=msvc-160
-#include <cmath>
+#include <cmath>  //import
 #include <iostream>
+#include <fstream>
+#include <chrono>
 
 
 // these values are constant and not allowed to be changed
-const double SOLAR_MASS = 4 * M_PI * M_PI;
+const double SOLAR_MASS = 4 * M_PI * M_PI;  //define the type of the values
 const double DAYS_PER_YEAR = 365.24;
 const unsigned int BODIES_COUNT = 5;
 
@@ -85,7 +87,7 @@ vector3d operator/(vector3d v, double mag) {
 }
 
 
-class body {
+class body {  //κάνει καινουριο class που παραγει bodies
 public:
     std::string name;
     vector3d position;
@@ -94,7 +96,7 @@ public:
 };
 
 
-void advance(body state[BODIES_COUNT], double dt) {
+void advance(body state[BODIES_COUNT], double dt) { //void γτ δν επιστρεφει τπτ. Στην παρένθεση ορίζει το όρισμα της class body
     /*
      * We precompute the quantity (r_i - r_j)
      */
@@ -136,7 +138,7 @@ void advance(body state[BODIES_COUNT], double dt) {
     }
 }
 
-void offset_momentum(body state[BODIES_COUNT]) {
+void offset_momentum(body state[BODIES_COUNT]) { // αλλάζει ταχυτητα ηλίου
     vector3d &sun_velocity = state[0].velocity;
 
     for (unsigned int i = 1; i < BODIES_COUNT; ++i) {
@@ -249,10 +251,22 @@ int main(int argc, char **argv) {
         const unsigned int n = atoi(argv[1]);
         offset_momentum(state);
         std::cout << energy(state) << std::endl;
+        auto start = std::chrono::high_resolution_clock::now();
+        std::ofstream MyFile;
+        MyFile.open("orbits_cpp.csv");
+        MyFile << "name of the body;position x;position y;position z" << std::endl;
         for (int i = 0; i < n; ++i) {
             advance(state, 0.01);
+            for (int j = 0; j < BODIES_COUNT; ++j) {
+                MyFile << state[j].name << ";" << state[j].position.x << ";" << state[j].position.y << ";"
+                       << state[j].position.z << std::endl;
+            }
         }
-        std::cout << energy(state) << std::endl;
-        return EXIT_SUCCESS;
+        { MyFile.close(); }
+            std::cout << energy(state) << std::endl;
+        auto finish = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = finish - start;
+        std::cout << "Runtime of the program is " << elapsed.count() << " seconds\n";
+            return EXIT_SUCCESS;
+        }
     }
-}
